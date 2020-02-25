@@ -1,5 +1,9 @@
 package de.javanachhilfe.halfbroke.persistence;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +35,7 @@ public class EntityManager<T> {
 	 * @throws Exception
 	 */
 	public static EntityManager getInstance() throws Exception {
-		if(entityManager == null) {
+		if (entityManager == null) {
 			entityManager = new EntityManager();
 			entityManager.setConnectionManager(ConnectionManager.getInstance());
 		}
@@ -40,24 +44,28 @@ public class EntityManager<T> {
 
 	/**
 	 * 
+	 * @param entity
+	 * @return
+	 * @throws Exception
 	 */
-	public void test() throws Exception {
-
+	public T read(T entity) throws Exception {
 		logger.info("Connecting...");
-
-		connectionManager.connect();
-		
-		Thread.sleep(1000);
-		
-		connectionManager.disconnect();
+		try (Connection connection = connectionManager.connect()) {
+			PreparedStatement preparedStatement = connection.prepareStatement("select * from " + entity.getClass().getSimpleName());
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				Long id = resultSet.getLong(1);
+				logger.info("ID: " + id);
+			}
+			return null;
+		}
 	}
 
-	public T read(T entity) {
-		// PreparedStatement preparedStatement;
-		// PreparedStatement.
-		return null;
-	}
-
+	/**
+	 * 
+	 * @param entity
+	 * @return
+	 */
 	public boolean write(T entity) {
 		return false;
 	}

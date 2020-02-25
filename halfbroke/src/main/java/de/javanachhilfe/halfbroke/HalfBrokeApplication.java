@@ -1,5 +1,6 @@
 package de.javanachhilfe.halfbroke;
 
+import de.javanachhilfe.halfbroke.model.Person;
 import de.javanachhilfe.halfbroke.persistence.EntityManager;
 
 /**
@@ -23,7 +24,8 @@ public class HalfBrokeApplication {
 	 */
 	private void start() throws Exception {
 		EntityManager entityManager = EntityManager.getInstance();
-		entityManager.test();
+		Person person = new Person();
+		entityManager.read(person);
 	}
 
 }
