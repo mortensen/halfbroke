@@ -25,6 +25,7 @@ public class HalfBrokeApplication {
 	private void start() throws Exception {
 		EntityManager entityManager = EntityManager.getInstance();
 		Person person = new Person();
+		person.setId(1l);
 		entityManager.read(person);
 	}
 
