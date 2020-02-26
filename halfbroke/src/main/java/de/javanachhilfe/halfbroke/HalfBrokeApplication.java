@@ -1,5 +1,8 @@
 package de.javanachhilfe.halfbroke;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.javanachhilfe.halfbroke.model.Person;
 import de.javanachhilfe.halfbroke.persistence.EntityManager;
 
@@ -10,6 +13,8 @@ import de.javanachhilfe.halfbroke.persistence.EntityManager;
  */
 public class HalfBrokeApplication {
 
+	private Logger logger = LoggerFactory.getLogger(getClass());
+
 	/**
 	 * 
 	 * @param args
@@ -18,7 +23,7 @@ public class HalfBrokeApplication {
 		new HalfBrokeApplication().start();
 
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -26,7 +31,9 @@ public class HalfBrokeApplication {
 		EntityManager entityManager = EntityManager.getInstance();
 		Person person = new Person();
 		person.setId(1l);
-		entityManager.read(person);
+		//TODO: cast? why?
+		Person loadedPerson = (Person)entityManager.read(person);
+		logger.info(loadedPerson.getFirstName() + " " + loadedPerson.getLastName());
 	}
 
 }

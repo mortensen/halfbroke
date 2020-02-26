@@ -1,17 +1,20 @@
 package de.javanachhilfe.halfbroke.persistence;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.javanachhilfe.halfbroke.connectivity.ConnectionManager;
-import de.javanachhilfe.halfbroke.model.Person;
+import de.javanachhilfe.halfbroke.utils.StringUtils;
 
 /**
  * 
@@ -57,7 +60,11 @@ public class EntityManager<T> {
 
 		primaryKey = getPrimaryKey(entity);
 
-		String sql = buildQuery(entity, primaryKey);
+		List<String> columns = getColumns(entity);
+
+		String sql = buildQuery(entity, primaryKey, columns);
+
+		T resultObject = (T) entity.getClass().getDeclaredConstructor().newInstance();
 
 		logger.info("Connecting...");
 		try (Connection connection = connectionManager.connect()) {
@@ -66,17 +73,27 @@ public class EntityManager<T> {
 			ResultSet resultSet = preparedStatement.executeQuery();
 
 			if(resultSet.first()) {
-				do {
-					Long id = resultSet.getLong(1);
-					logger.info("ID: " + id);
-				} while(resultSet.next());
+
+				Map<String, Object> resultMapWithColumnsAndValues = new HashMap<>();
+
+				for(String column : columns) {
+					Object value = resultSet.getObject(column);
+					resultMapWithColumnsAndValues.put(column, value);
+				}
+
+				mapResultToObject(resultObject, resultMapWithColumnsAndValues);
+
 			} else {
 				logger.info("Kein Objekt mit dieser ID gefunden.");
 				throw new ObjectNotFoundException();
 			}
 
-			return null;
+			if(resultSet.next()) {
+				// Objekt nicht eindeutig!
+				throw new ObjectNotFoundException();
+			}
 
+			return resultObject;
 		}
 	}
 
@@ -94,7 +111,7 @@ public class EntityManager<T> {
 			for(Field field : clazz.getDeclaredFields()) {
 				if(field.isAnnotationPresent(PrimaryKey.class)) {
 					Map<String, Object> primaryKey = new HashMap<>();
-					//IllegalAccess ohne Grant
+					// IllegalAccess ohne Grant
 					field.setAccessible(true);
 					primaryKey.put(field.getName(), field.get(entity));
 					return primaryKey;
@@ -113,15 +130,65 @@ public class EntityManager<T> {
 	 * @param primaryKey
 	 * @return
 	 */
-	private String buildQuery(T entity, Map<String, Object> primaryKey) {
-		StringBuffer stringBuffer = new StringBuffer("select * from ");
-		stringBuffer.append(entity.getClass().getSimpleName());
-		stringBuffer.append(" where ");
+	private String buildQuery(T entity, Map<String, Object> primaryKey, List<String> columns) {
+		StringBuffer stringBuffer = new StringBuffer();
+		stringBuffer.append("SELECT ");
+		String cols = columns.size() > 0 ? StringUtils.concat(',', columns) : "*";
+		stringBuffer.append(cols);
+		stringBuffer.append(" FROM ");
+		String table = entity.getClass().getSimpleName();
+		stringBuffer.append(table);
+		stringBuffer.append(" WHERE ");
 		String key = primaryKey.keySet().stream().findFirst().get();
 		stringBuffer.append(key);
 		stringBuffer.append(" = ");
 		stringBuffer.append(primaryKey.get(key));
 		return stringBuffer.toString();
+	}
+
+	/**
+	 * 
+	 * @param entity
+	 * @return
+	 */
+	private List<String> getColumns(T entity) {
+		List<String> columns = new ArrayList<>();
+		Class<?> clazz = entity.getClass();
+		for(Field field : clazz.getDeclaredFields()) {
+			if(!isTransient(field)) {
+				// field.setAccessible(true);
+				columns.add(field.getName());
+			}
+		}
+		return columns;
+	}
+
+	/**
+	 * 
+	 * @param entity
+	 * @param values
+	 */
+	private void mapResultToObject(T entity, Map<String, Object> values) {
+		Class<?> clazz = entity.getClass();
+		try {
+			for(String column : values.keySet()) {
+				Field field = clazz.getDeclaredField(column);
+				field.setAccessible(true);
+				field.set(entity, values.get(column));
+			}
+		} catch(NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
+			logger.error("Failed to map values!", e);
+		}
+	}
+
+	/**
+	 * keep your modifiers simple with this class
+	 * 
+	 * @param field
+	 * @return
+	 */
+	private boolean isTransient(Field field) {
+		return Modifier.isTransient(field.getModifiers());
 	}
 
 	/**
