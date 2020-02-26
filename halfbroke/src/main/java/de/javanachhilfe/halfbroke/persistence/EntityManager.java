@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.javanachhilfe.halfbroke.connectivity.ConnectionManager;
+import de.javanachhilfe.halfbroke.model.Person;
 
 /**
  * 
@@ -38,7 +39,7 @@ public class EntityManager<T> {
 	 * @throws Exception
 	 */
 	public static EntityManager getInstance() throws Exception {
-		if (entityManager == null) {
+		if(entityManager == null) {
 			entityManager = new EntityManager();
 			entityManager.setConnectionManager(ConnectionManager.getInstance());
 		}
@@ -64,11 +65,11 @@ public class EntityManager<T> {
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			ResultSet resultSet = preparedStatement.executeQuery();
 
-			if (resultSet.first()) {
+			if(resultSet.first()) {
 				do {
 					Long id = resultSet.getLong(1);
 					logger.info("ID: " + id);
-				} while (resultSet.next());
+				} while(resultSet.next());
 			} else {
 				logger.info("Kein Objekt mit dieser ID gefunden.");
 				throw new ObjectNotFoundException();
@@ -80,8 +81,7 @@ public class EntityManager<T> {
 	}
 
 	/**
-	 * Check if there is a field with the annotation {@link PrimaryKey} and return
-	 * it's value.
+	 * Check if there is a field with the annotation {@link PrimaryKey} and return it's value.
 	 * 
 	 * @param entity
 	 * @return
@@ -90,17 +90,20 @@ public class EntityManager<T> {
 	private Map<String, Object> getPrimaryKey(T entity) throws ObjectNotFoundException {
 		try {
 			Class<?> clazz = entity.getClass();
-			for (Field field : clazz.getFields()) {
-				if (field.isAnnotationPresent(PrimaryKey.class)) {
+			// getFields() wäre leer
+			for(Field field : clazz.getDeclaredFields()) {
+				if(field.isAnnotationPresent(PrimaryKey.class)) {
 					Map<String, Object> primaryKey = new HashMap<>();
+					//IllegalAccess ohne Grant
+					field.setAccessible(true);
 					primaryKey.put(field.getName(), field.get(entity));
 					return primaryKey;
 				}
 			}
-		} catch (IllegalAccessException e) {
+		} catch(IllegalAccessException e) {
 			logger.error("Reflection call failed! ", e);
 		}
-		//in case no field has the annoation OR the reflection call failed
+		// in case no field has the annoation OR the reflection call failed
 		throw new ObjectNotFoundException();
 	}
 
