@@ -1,1 +1,0 @@
-package de.javanachhilfe.halfbroke.connectivity;

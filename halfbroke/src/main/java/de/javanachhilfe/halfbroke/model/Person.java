@@ -1,30 +1,19 @@
 package de.javanachhilfe.halfbroke.model;
 
-import de.javanachhilfe.halfbroke.persistence.PrimaryKey;
-
 /**
  * 
  * @author frederik.mortensen
  *
  */
-public class Person {
+public class Person extends AbstractEntity {
 
-	@PrimaryKey
-	private Long id;
+	private static final long serialVersionUID = 1L;
 
 	private String firstName;
 
 	private String lastName;
 
 	private transient String comment;
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
 
 	public String getFirstName() {
 		return firstName;
