@@ -16,6 +16,7 @@ public class StringUtils {
 	 * @return
 	 */
 	public static String concat(char separator, List<String> strings) {
+		//TODO: use streaming api
 		StringBuffer resultString = new StringBuffer();
 		for(String value : strings) {
 			resultString.append(value);

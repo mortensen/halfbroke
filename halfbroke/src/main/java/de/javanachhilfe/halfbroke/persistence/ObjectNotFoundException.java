@@ -1,7 +1,7 @@
 package de.javanachhilfe.halfbroke.persistence;
 
 /**
- * 
+ * In case the object was not found in database, this exception can be thrown
  * @author frederik.mortensen
  *
  */

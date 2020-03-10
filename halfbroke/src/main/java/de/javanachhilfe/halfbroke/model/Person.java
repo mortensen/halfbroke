@@ -13,6 +13,9 @@ public class Person extends AbstractEntity {
 
 	private String lastName;
 
+	/**
+	 * not being persisted to database
+	 */
 	private transient String comment;
 
 	public String getFirstName() {

@@ -14,14 +14,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.javanachhilfe.halfbroke.connectivity.ConnectionManager;
+import de.javanachhilfe.halfbroke.model.AbstractEntity;
 import de.javanachhilfe.halfbroke.utils.StringUtils;
 
 /**
+ * The entity manager is used for CRUD operations on the database.
  * 
  * @author frederik.mortensen
  *
  */
-public class EntityManager<T> {
+public class EntityManager {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -30,13 +32,14 @@ public class EntityManager<T> {
 	private ConnectionManager connectionManager = null;
 
 	/**
-	 * 
+	 * As this is a singleton instance the constructor is private.
 	 */
 	private EntityManager() {
 
 	}
 
 	/**
+	 * Get or create an instance of EntityManager to be used as a singleton reference.
 	 * 
 	 * @return
 	 * @throws Exception
@@ -51,36 +54,44 @@ public class EntityManager<T> {
 
 	/**
 	 * 
-	 * @param entity
+	 * @param entity the object that holds the primary which will be used to select from database.<br />
+	 * The entity type is also the database table as we don't use any table annotations.
 	 * @return
-	 * @throws Exception
+	 * @throws Exception the exception handling needs work if planning to use this in production!
 	 */
-	public T read(T entity) throws Exception {
-		Map<String, Object> primaryKey = null;
+	public <T extends AbstractEntity> T read(T entity) throws Exception {
+		
+		Map<String, Object> primaryKeyNameAndValue = null;
 
-		primaryKey = getPrimaryKey(entity);
+		primaryKeyNameAndValue = getPrimaryKey(entity);
 
 		List<String> columns = getColumns(entity);
 
-		String sql = buildQuery(entity, primaryKey, columns);
+		String sql = buildQuery(entity, primaryKeyNameAndValue, columns);
 
+		//TODO: could also be void?
 		T resultObject = (T) entity.getClass().getDeclaredConstructor().newInstance();
 
 		logger.info("Connecting...");
 		try (Connection connection = connectionManager.connect()) {
+			
 			logger.info("Executing: " + sql);
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			ResultSet resultSet = preparedStatement.executeQuery();
 
+			//get first result
 			if(resultSet.first()) {
 
+				//read result
 				Map<String, Object> resultMapWithColumnsAndValues = new HashMap<>();
 
 				for(String column : columns) {
+					//Note: we only need objects here, no parsing neccessary as we use reflections!
 					Object value = resultSet.getObject(column);
 					resultMapWithColumnsAndValues.put(column, value);
 				}
 
+				//fill returning entity object with the database result values
 				mapResultToObject(resultObject, resultMapWithColumnsAndValues);
 
 			} else {
@@ -101,62 +112,68 @@ public class EntityManager<T> {
 	 * Check if there is a field with the annotation {@link PrimaryKey} and return it's value.
 	 * 
 	 * @param entity
-	 * @return
+	 * @return a map containing the name of the primary key column and it's value
 	 * @throws ObjectNotFoundException
 	 */
-	private Map<String, Object> getPrimaryKey(T entity) throws ObjectNotFoundException {
+	private <T extends AbstractEntity> Map<String, Object> getPrimaryKey(T entity) throws ObjectNotFoundException {
 		try {
 			Class<?> clazz = entity.getClass();
-			// getFields() wäre leer
+			
+			//Note: getFields() would be empty!
 			for(Field field : clazz.getDeclaredFields()) {
 				if(field.isAnnotationPresent(PrimaryKey.class)) {
-					Map<String, Object> primaryKey = new HashMap<>();
-					// IllegalAccess ohne Grant
+					Map<String, Object> primaryKeyNameAndValue = new HashMap<>();
+					// Note: IllegalAccessException if we don't grant access.
 					field.setAccessible(true);
-					primaryKey.put(field.getName(), field.get(entity));
-					return primaryKey;
+					primaryKeyNameAndValue.put(field.getName(), field.get(entity));
+					return primaryKeyNameAndValue;
 				}
 			}
 		} catch(IllegalAccessException e) {
 			logger.error("Reflection call failed! ", e);
 		}
 		// in case no field has the annoation OR the reflection call failed
+		logger.error("Didn't find any primary key!");
 		throw new ObjectNotFoundException();
 	}
 
 	/**
-	 * 
-	 * @param entity
-	 * @param primaryKey
-	 * @return
+	 * Now that we have the table object, the primary key field and value and the columns we can produce a select.
+	 * @param entity the table we want to select from
+	 * @param primaryKey the key and value for the database primary key
+	 * @param columns the database columns to select
+	 * @return the generated sql select call.
 	 */
-	private String buildQuery(T entity, Map<String, Object> primaryKey, List<String> columns) {
+	private <T extends AbstractEntity> String buildQuery(T entity, Map<String, Object> primaryKey, List<String> columns) {
 		StringBuffer stringBuffer = new StringBuffer();
 		stringBuffer.append("SELECT ");
+		//if there are no columns given, use * as fallback
 		String cols = columns.size() > 0 ? StringUtils.concat(',', columns) : "*";
 		stringBuffer.append(cols);
+
 		stringBuffer.append(" FROM ");
 		String table = entity.getClass().getSimpleName();
 		stringBuffer.append(table);
+
 		stringBuffer.append(" WHERE ");
 		String key = primaryKey.keySet().stream().findFirst().get();
 		stringBuffer.append(key);
 		stringBuffer.append(" = ");
 		stringBuffer.append(primaryKey.get(key));
+		
 		return stringBuffer.toString();
 	}
 
 	/**
-	 * 
+	 * As we don't use a column annotation we get every field that is not defined as transient.
 	 * @param entity
 	 * @return
 	 */
-	private List<String> getColumns(T entity) {
+	private <T extends AbstractEntity> List<String> getColumns(T entity) {
 		List<String> columns = new ArrayList<>();
 		Class<?> clazz = entity.getClass();
 		for(Field field : clazz.getDeclaredFields()) {
 			if(!isTransient(field)) {
-				// field.setAccessible(true);
 				columns.add(field.getName());
 			}
 		}
@@ -164,14 +181,15 @@ public class EntityManager<T> {
 	}
 
 	/**
-	 * 
+	 * fill result object with the database result values
 	 * @param entity
 	 * @param values
 	 */
-	private void mapResultToObject(T entity, Map<String, Object> values) {
+	private <T extends AbstractEntity> void mapResultToObject(T entity, Map<String, Object> values) {
 		Class<?> clazz = entity.getClass();
 		try {
 			for(String column : values.keySet()) {
+				//Note: we know the columns should exist as the got them through reflection in the first place!
 				Field field = clazz.getDeclaredField(column);
 				field.setAccessible(true);
 				field.set(entity, values.get(column));
