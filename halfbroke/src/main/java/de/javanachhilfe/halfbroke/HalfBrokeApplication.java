@@ -33,7 +33,7 @@ public class HalfBrokeApplication {
 		person.setId(1l);
 		//TODO: cast? why?
 		Person loadedPerson = (Person)entityManager.read(person);
-		logger.info(loadedPerson.getFirstName() + " " + loadedPerson.getLastName());
+		logger.info("Found person with name: " + loadedPerson.getFirstName() + " " + loadedPerson.getLastName());
 	}
 
 }

@@ -173,9 +173,14 @@ public class EntityManager {
 		List<String> columns = new ArrayList<>();
 		Class<?> clazz = entity.getClass();
 		for(Field field : clazz.getDeclaredFields()) {
-			if(!isTransient(field)) {
-				columns.add(field.getName());
+			if(isTransient(field)) {
+				continue;
 			}
+			if (field.getName().equals("serialVersionUID")) {
+				continue;
+			}
+			columns.add(field.getName());
+
 		}
 		return columns;
 	}
