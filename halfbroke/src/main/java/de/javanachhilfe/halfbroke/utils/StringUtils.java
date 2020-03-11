@@ -10,19 +10,15 @@ import java.util.List;
 public class StringUtils {
 
 	/**
-	 * 
-	 * @param separator
-	 * @param strings
+	 * Melting down the list of strings to a single string with values separated by the separator sign.
+	 * @param separator enables the method to concat with commas or semicolons etc.
+	 * @param strings the list of strings to melt down to one target string, separated by the separator
 	 * @return
 	 */
 	public static String concat(char separator, List<String> strings) {
-		//TODO: use streaming api
-		StringBuffer resultString = new StringBuffer();
-		for(String value : strings) {
-			resultString.append(value);
-			resultString.append(separator);
-		}
-		return resultString.substring(0, resultString.length() - 1);
+		return strings.stream().reduce(null, (reducedString, column) -> {
+			return reducedString != null ? reducedString + separator + column : column;
+		});
 	}
 
 }
