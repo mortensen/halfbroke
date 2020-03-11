@@ -1,13 +1,16 @@
 package de.javanachhilfe.halfbroke.model;
 
+import java.io.Serializable;
+
 import de.javanachhilfe.halfbroke.persistence.PrimaryKey;
 
 /**
  * An example model
+ * 
  * @author frederik.mortensen
  *
  */
-public class Person extends AbstractEntity {
+public class Person implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 

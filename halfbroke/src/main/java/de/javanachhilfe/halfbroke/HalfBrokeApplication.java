@@ -7,7 +7,7 @@ import de.javanachhilfe.halfbroke.model.Person;
 import de.javanachhilfe.halfbroke.persistence.EntityManager;
 
 /**
- * 
+ * Main class to start the demo
  * @author frederik.mortensen
  *
  */
@@ -31,8 +31,7 @@ public class HalfBrokeApplication {
 		EntityManager entityManager = EntityManager.getInstance();
 		Person person = new Person();
 		person.setId(1l);
-		//TODO: cast? why?
-		Person loadedPerson = (Person)entityManager.read(person);
+		Person loadedPerson = entityManager.read(Person.class, person);
 		logger.info("Found person with name: " + loadedPerson.getFirstName() + " " + loadedPerson.getLastName());
 	}
 
