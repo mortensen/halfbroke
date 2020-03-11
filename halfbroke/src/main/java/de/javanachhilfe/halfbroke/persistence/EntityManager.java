@@ -40,7 +40,7 @@ public class EntityManager {
 	/**
 	 * Get or create an instance of EntityManager to be used as a singleton reference.
 	 * 
-	 * @return
+	 * @return an instance of EntityManager
 	 * @throws Exception
 	 */
 	public static EntityManager getInstance() throws Exception {
@@ -96,7 +96,7 @@ public class EntityManager {
 			}
 
 			if(resultSet.next()) {
-				// Objekt nicht eindeutig!
+				// Object not unique!
 				throw new ObjectNotFoundException();
 			}
 
@@ -107,9 +107,9 @@ public class EntityManager {
 	/**
 	 * Check if there is a field with the annotation {@link PrimaryKey} and return it's value.
 	 * 
-	 * @param entity
+	 * @param entity the model that represents the table
 	 * @return a map containing the name of the primary key column and it's value
-	 * @throws ObjectNotFoundException
+	 * @throws ObjectNotFoundException if the primary key could not be determined
 	 */
 	private <T> Map<String, Object> getPrimaryKey(T entity) throws ObjectNotFoundException {
 		try {
@@ -165,7 +165,7 @@ public class EntityManager {
 	 * As we don't use a column annotation we get every field that is not defined as transient.
 	 * 
 	 * @param entity
-	 * @return
+	 * @return a list of column names as strings
 	 */
 	private <T> List<String> getColumns(T entity) {
 		List<String> columns = new ArrayList<>();
@@ -186,8 +186,8 @@ public class EntityManager {
 	/**
 	 * fill result object with the database result values
 	 * 
-	 * @param entity
-	 * @param values
+	 * @param entity the object holding the results selected from the database table
+	 * @param values the keys and values of the database select result
 	 */
 	private <T> void mapResultToObject(T entity, Map<String, Object> values) {
 		Class<?> clazz = entity.getClass();
@@ -204,18 +204,19 @@ public class EntityManager {
 	}
 
 	/**
-	 * keep your modifiers simple with this class
+	 * Find out (using reflections) wether the given field is a transient field which should not be persisted
 	 * 
 	 * @param field
-	 * @return
+	 * @return wether the field is transient or else should be persisted
 	 */
 	private boolean isTransient(Field field) {
+		//Note: keep your modifiers simple with this class
 		return Modifier.isTransient(field.getModifiers());
 	}
 
 	/**
-	 * 
-	 * @param connectionManager
+	 * The EntityManager instance needs a ConnectionManager instance to be able to connect to a database and select data.
+	 * @param connectionManager the instance used to connect to the preconfigured database
 	 */
 	private void setConnectionManager(ConnectionManager connectionManager) {
 		this.connectionManager = connectionManager;

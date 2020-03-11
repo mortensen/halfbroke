@@ -16,7 +16,7 @@ public class HalfBrokeApplication {
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	/**
-	 * 
+	 * Instantiates the class to get out of static programming. Then starts the demo.
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
@@ -25,7 +25,8 @@ public class HalfBrokeApplication {
 	}
 
 	/**
-	 * 
+	 * Simle EntityManager showcase with reflections
+	 * @throws Exception
 	 */
 	private void start() throws Exception {
 		EntityManager entityManager = EntityManager.getInstance();

@@ -24,8 +24,9 @@ public class ConnectionManager {
 	}
 
 	/**
-	 * Retrieve an insstance of this class to manage database connections using the singleton pattern.
-	 * @return
+	 * Retrieve an instance of this class to manage database connections using the singleton pattern.
+	 * @return an instance of connection mananger
+	 * @throws Exception
 	 */
 	public static ConnectionManager getInstance() throws Exception {
 		if (connectionManager == null) {
