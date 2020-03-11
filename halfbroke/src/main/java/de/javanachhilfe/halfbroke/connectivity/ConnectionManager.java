@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 
+ * Singleton instance to connect to a database
  * @author frederik.mortensen
  *
  */
@@ -18,14 +18,15 @@ public class ConnectionManager {
 	private static ConnectionManager connectionManager = null;
 
 	/**
-	 * 
+	 * This class is a singleton, so there is no public constructor. 
 	 */
 	private ConnectionManager() {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Retrieve an instance of this class to manage database connections using the singleton pattern.
+	 * @return an instance of connection mananger
+	 * @throws Exception
 	 */
 	public static ConnectionManager getInstance() throws Exception {
 		if (connectionManager == null) {
@@ -35,15 +36,16 @@ public class ConnectionManager {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Get a connection to the given database using the configured credentials.<br />
+	 * Hint: These values should be put inside a config file.
+	 * @return the jdbc database connection
 	 * @throws Exception
 	 */
 	public Connection connect() throws Exception {
 		Class.forName("com.mysql.cj.jdbc.Driver");
 
 		String url = "jdbc:mysql://localhost:3306/halfbroke";
-		String username = "fred";
+		String username = "duke";
 		String password = "test";
 
 		Connection connection = DriverManager.getConnection(url, username, password);
@@ -52,7 +54,7 @@ public class ConnectionManager {
 	}
 
 	/**
-	 * 
+	 * Close the database connection.
 	 * @param connection
 	 */
 	public void disconnect(Connection connection) {
