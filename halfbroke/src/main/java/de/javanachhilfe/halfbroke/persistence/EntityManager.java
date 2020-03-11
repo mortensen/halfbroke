@@ -50,9 +50,9 @@ public class EntityManager {
 		}
 		return entityManager;
 	}
-	
+
 	/**
-	 * 
+	 * @param clazz
 	 * @param entity the object that holds the primary which will be used to select from database.<br />
 	 *            The entity type is also the database table as we don't use any table annotations.
 	 * @return
@@ -60,15 +60,11 @@ public class EntityManager {
 	 */
 	public <T> T read(Class<T> clazz, T entity) throws Exception {
 
-		Map<String, Object> primaryKeyNameAndValue = null;
-
-		primaryKeyNameAndValue = getPrimaryKey(entity);
+		Map<String, Object> primaryKeyNameAndValue = getPrimaryKey(entity);
 
 		List<String> columns = getColumns(entity);
 
 		String sql = buildQuery(entity, primaryKeyNameAndValue, columns);
-
-		T resultObject = clazz.getDeclaredConstructor().newInstance();
 
 		logger.info("Connecting...");
 		try (Connection connection = connectionManager.connect()) {
@@ -76,6 +72,8 @@ public class EntityManager {
 			logger.info("Executing: " + sql);
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			ResultSet resultSet = preparedStatement.executeQuery();
+
+			T resultObject = clazz.getDeclaredConstructor().newInstance();
 
 			// get first result
 			if(resultSet.first()) {
